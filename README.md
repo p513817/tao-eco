@@ -1,23 +1,27 @@
 # TAO-ECO
+welcome to tao-eco, this repository is for TAO Toolkit.
 
-* Build Environments for Inference (`TensorRT`, `DeepStream`) & Convert `etlt` model
-    
-    * docker
-        * [Dockerfile](./docker/Dockerfile) : build Docker image and container
-        * [requirements.sh](./docker/requirements.sh): install requirement when building the target docker image.
-        
-* Make A Custom Dataset
-    
-    * prepare_datasets/{tasks}
-        > tasks=classfication:
+* [Feature](#feature)
+* [How to use](#how-to-use)
+    * [Prepare Dataset for TAO Toolkit](#prepare-dataset-for-tao-toolkit)
+    * [Do Inference via TensorRT](#do-inference-via-tensorrt)
+    * [Run Deep Stream App with etlt model](#run-deep-stream-app-with-etlt-model)
+    * [Remove TAO-ECO](#remove-tao-eco)
+* [Train with TAO Toolkit](#train-with-tao-toolkit)
+* [File Structure](#file-structure)
 
-        * [dataset.json](./training_tools/make_datasets/classification/dataset.json): steup classes and dataset's root before you collect data.
-        * [take_pictures.py](./training_tools/make_datasets/classification/take_pictures.py): execute it to collect data
-        * [format_dataset.py](./training_tools/make_datasets/classification/format_dataset.py): split datasets into `split/` using `-s` and `--sroot`
-    * 
-* Train with TAO Toolkit
 
-# How to use?
+# Feature
+
+0. auto build docker image and container.
+1. prepare custom dataset via web cam.
+2. split custom dataset to correct format.
+3. convert encryption model (etlt) to tensorrt engine.
+4. use tensorrt to do inference.
+5. run deepstream app with etlt model.
+
+
+# How to use
 
 ## Prepare Dataset for TAO Toolkit
 > only support classification now
@@ -121,7 +125,7 @@
     ```
     ![img](./assets/figures/trt-infer.gif)
 
-## Do inference via Deep Stream
+## Run Deep Stream App with etlt model
 
 1. Build & Run Environment
 
@@ -212,9 +216,54 @@
 ![img](./assets/figures/rm-eco-sample.gif)
 
 
+# Train with TAO Toolkit
 
----
+* Check detail in my notion - > [LINK](https://max-c.notion.site/Full-Run-Classification-TensorRT-Engine-which-trained-from-TAO-with-custom-data-e17151431f9e49cab279753e21189e5b)
 
 
+# File Structure
+
+* [run_eco](run_eco): build docker image and run the target container.
+
+* [rm_eco](rm_eco): remove image and container.
+
+* [assets/](assets): path of tools and figures
+
+    
+* [docker/](docker) 
+    * [Dockerfile](./docker/Dockerfile) : build Docker image and container
+    * [requirements.sh](./docker/requirements.sh): install requirement when building the target docker image.
+
+* [prepare_datasets/{tasks}/](prepare_datasets)
+
+    * [dataset.json](./training_tools/make_datasets/classification/dataset.json): steup classes and dataset's root before you collect data.
+    * [take_pictures.py](./training_tools/make_datasets/classification/take_pictures.py): execute it to collect data
+    * [format_dataset.py](./training_tools/make_datasets/classification/format_dataset.py): split datasets into `split/` using `-s` and `--sroot`
+    
+* tensorrt/
+
+    * [tasks/{name of task}](tensorrt/tasks): path of `etlt model` and `classmap.json`, both of them will be generate after TAO trainning, user have to drag them into this path.
+
+    * [etlt_to_tensorrt/classification_converter.sh](tensorrt/etlt_to_tensorrt/classification_converter.sh): convert model `etlt` to `trt`.
+
+    * [inference/trt_infer.py](tensorrt/inference/trt_infer.py): do inference with `TensorRT Engine`.
+
+* deepstream/
+
+    * [configs](deepstream/configs) : all of config file will be place in here.
+        
+        * [config_infer_{type}_{info}.txt](deepstream/configs/config_infer_secondary_glasses.txt): config of model
+            
+            * type: `primary` or `secondary`
+            * other: 
+                * `task`: name of task
+            * sample:
+                * config_infer_secondary_custom_mask.txt    
+        
+        * [labels_{task}](deepstream/configs/labels_glasses.txt): label of each task
+
+        * [deepstream_app_{source}_{task}.txt](deepstream/configs/deepstream_app_s1_mask_glasses.txt): config file for deepstream app
+
+    * [models/{task}](deepstream/models): any task's `etlt` model will be place in here.
 
 ---
