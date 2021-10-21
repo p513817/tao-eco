@@ -1,6 +1,16 @@
 # TAO-ECO
 welcome to tao-eco, this repository is for TAO Toolkit.
 
+* [Feature](#feature)
+* [How to use](#how-to-use)
+    * [Prepare Dataset for TAO Toolkit](#prepare-dataset-for-tao-toolkit)
+    * [Do Inference via TensorRT](#do-inference-via-tensorrt)
+    * [Run Deep Stream App with etlt model](#run-deep-stream-app-with-etlt-model)
+    * [Remove TAO-ECO](#remove-tao-eco)
+* [Train with TAO Toolkit](#train-with-tao-toolkit)
+* [File Structure](#file-structure)
+
+
 # Feature
 
 0. auto build docker image and container.
@@ -11,7 +21,7 @@ welcome to tao-eco, this repository is for TAO Toolkit.
 5. run deepstream app with etlt model.
 
 
-# How to use?
+# How to use
 
 ## Prepare Dataset for TAO Toolkit
 > only support classification now
@@ -209,7 +219,6 @@ welcome to tao-eco, this repository is for TAO Toolkit.
 # Train with TAO Toolkit
 
 * Check detail in my notion - > [LINK](https://max-c.notion.site/Full-Run-Classification-TensorRT-Engine-which-trained-from-TAO-with-custom-data-e17151431f9e49cab279753e21189e5b)
-
 
 
 # File Structure
