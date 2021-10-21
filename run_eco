@@ -1,0 +1,198 @@
+#!/bin/bash
+
+###########################################################################
+# Help Information
+Help()
+{
+   # Display Help
+   echo "Build Docker Image & Container of TAO ECO."
+   echo
+   echo "Syntax: run_tao [ds]"
+   echo 
+   echo "ds         Build & Run DeepStream's Einvironments."
+   echo
+}
+
+while getopts ":h:i" option; do
+   case $option in
+        h) # display Help
+            Help
+            exit;;
+        i)
+            exit;;
+   esac
+done
+
+###########################################################################
+# Basic Options
+
+ROOT="$( realpath $( dirname -- $0 ))"
+DOCKER_FILE="${ROOT}/docker/Dockerfile"
+PROJECT="tao/eco"
+
+# TAO_ECO
+TRT="tensorrt"
+TRT_TAG="dev"
+TRT_IMG="${PROJECT}/${TRT}:${TRT_TAG}"
+TRT_CNTR="tao-trt"
+
+# DEEP STREAM
+DS="deepstream"
+DS_BASE_TAG="base"
+DS_DEV_TAG="dev"
+
+DS_BASE_IMG="${PROJECT}/${DS}:${DS_BASE_TAG}"
+DS_DEV_IMG="${PROJECT}/${DS}:${DS_DEV_TAG}"
+DS_CNTR="tao-ds"
+
+# For Docker File
+STAGE_TRT="${TRT}-${TRT_TAG}"
+STAGE_DS_BASE="${DS}-${DS_BASE_TAG}"
+STAGE_DS_DEV="${DS}-${DS_DEV_TAG}"
+
+# Container Options
+WORKSPACE="workspace/"
+CAM="/dev/video0"
+
+###########################################################################
+# Function
+
+REST='\e[0m';
+GREEN='\e[0;32m';   BGREEN='\e[7;32m';
+RED='\e[0;31m';     BRED='\e[7;31m';
+Cyan='\e[0;36m';  BCyan='\e[7;36m'
+YELLOW='\e[33m';
+BLINK="\e[5m"
+
+# printd ["Content"] [Mode - #, ##, ###]
+printd(){
+    
+    COL=$(stty size | cut -d" " -f2);
+    SYM="—"
+    # printf "${SYM}%.0s" $(seq 1 $COL); printf "\n"
+    if [ -z $2 ];then COLOR=$REST
+    elif [ $2 = "G" ];then COLOR=$GREEN
+    elif [ $2 = "R" ];then COLOR=$RED
+    elif [ $2 = "BG" ];then COLOR=$BGREEN
+    elif [ $2 = "BR" ];then COLOR=$BRED
+    elif [ $2 = "Cy" ];then COLOR=$Cyan
+    elif [ $2 = "BCy" ];then COLOR=$BCyan
+    elif [ $2 = "Blink" ];then COLOR=$BLINK
+    else COLOR=$REST
+    fi
+    echo
+    echo -e "${COLOR}$1${REST}"
+}
+
+
+declare -A dict
+dict=(  ['1']=${GREEN}
+        ['2']=${YELLOW}
+        ['3']=${RED} )
+
+counting_time(){
+
+    TITLE=$1
+    TIMES=$2
+    CNT="${TITLE} ... "
+
+    printf "%s" "${CNT}"
+    for i in $(seq ${TIMES} -1 1 );do
+        echo -e "\r${dict[$i]} ${TITLE} (${i}) \c${RESET}"
+        sleep 1
+    done
+    echo -e "${RESET}START\n"
+}
+
+
+check_image(){ 
+    echo "$(docker images --format "table {{.Repository}}:{{.Tag}}" | grep ${1} | wc -l )"
+}
+
+check_container(){ 
+    echo "$(docker ps -a --format "{{.Names}}" | grep ${1} | wc -l ) "
+}
+
+# build_image [ Stage in Dockerfile ] [ Docker Image Name ]
+build_image(){
+    STAGE=$1
+    STAGE_IMG=$2
+
+    printf "%s" "Searching image (${STAGE_IMG}) ... "
+    if [[ $(check_image ${STAGE_IMG} ) -gt 0 ]];then
+    # if [[ -z "$(docker image inspect --format . ${IMG} 2>/dev/null)" ]];then 
+        echo -e "PASS"
+    else 
+        echo -e "Failed"
+
+        printd "Couldn't find image (${STAGE_IMG}). Start to build a new one." BG
+        docker build --target ${STAGE} -t ${STAGE_IMG}  -f ${DOCKER_FILE} ${ROOT}
+    fi
+}
+
+# run_container [Base Image] [Container Name] [--rm]
+run_container(){
+    
+    IMAGE=$1
+    NAME=$2
+    RM=$3
+    # Check before start
+    # wc -l will return 1:Ture , 0:Empty
+    echo -e "Searching Container (${NAME}) ... \c"
+    if [[ $( check_container ${NAME} ) -gt 0 ]]; then
+        echo -e "PASS \n"
+
+        counting_time "Start to run the container" 3 
+        clear
+        docker start ${NAME} > /dev/null 2>&1
+        docker attach ${NAME} 
+    else 
+        echo -e "Failed"
+        xhost +
+        if [[ -z $RM ]];then
+            printd "Couldn't find container. Start a new one (Name: ${NAME})." BG
+            docker run \
+            --gpus all \
+            --name ${NAME} \
+            --device=${CAM}:${CAM} \
+            --volume=${ROOT}:/${WORKSPACE} \
+            --volume=/tmp/.X11-unix:/tmp/.X11-unix \
+            -e DISPLAY=$DISPLAY \
+            -it ${IMAGE} 
+        else
+            printd "Couldn't find container. Start a new one with auto remove." BG
+            docker run --gpus all --rm --name ${NAME} --device=${CAM}:${CAM} --volume=${ROOT}:/${WORKSPACE} \
+            --volume=/tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=$DISPLAY -it ${IMAGE} 
+        fi
+    fi
+}
+
+###########################################################################
+
+printd "Initialize ..." BG
+sudo apt-get install figlet boxes lolcat -qqy
+clear
+
+echo "Welcom to TAO-ECO" | figlet -k | lolcat
+printd "Check Basic Environment (${TRT_IMG}) " BG
+build_image ${STAGE_TRT} ${TRT_IMG}
+
+if [[ -z ${1} ]];then
+    printd "Run Basic's Container" BG
+    run_container ${TRT_IMG} ${TRT_CNTR}
+    
+elif [[ ${1} = "ds" ]];then
+    if [[ $(check_image ${DS_DEV_IMG}) -eq 1 ]];then
+        printd "Check DeepStream Develop Environment" BG
+        build_image ${STAGE_DS_DEV} ${DS_DEV_IMG}
+    else
+        printd "Check DeepStream Base & Dev Environment" BG
+        build_image ${STAGE_DS_BASE} ${DS_BASE_IMG}     
+        build_image ${STAGE_DS_DEV} ${DS_DEV_IMG}            
+    fi
+    
+    printd "Run DeepsSream's Container" BG
+    run_container ${DS_DEV_IMG} ${DS_CNTR}
+else
+    echo "Quit"
+fi

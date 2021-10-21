@@ -1,0 +1,52 @@
+#!/bin/bash
+
+OPT=${1}
+SEC_OPT=${2}
+
+
+while [[ 1 ]];do
+    if [[ -z $OPT ]];then
+        echo -e "Which item you want to remove [image/container]: \c"
+        read OPT
+    elif [[ $OPT = "image" ]];then
+        
+        if [[ -z ${SEC_OPT} ]];then
+            echo -e "Which Image you want to remove [trt-dev/ds-base/ds-dev/all]: \c"
+            read SEC_OPT
+        fi
+
+        case ${SEC_OPT} in
+            trt-dev)
+                docker rmi -f tao/eco/tensorrt:dev;;
+            ds-base)
+                docker rmi -f tao/eco/deepstream:base;;
+            ds-dev)
+                docker rmi -f tao/eco/deepstream:dev;;
+            all)
+                docker rmi -f tao/eco/tensorrt:dev tao/eco/deepstream:base tao/eco/deepstream:dev;;
+        esac
+
+        exit
+        
+    elif [[ $OPT = "container" ]];then
+
+        if [[ -z ${SEC_OPT} ]];then
+            echo -e "Which Image you want to remove [tao-trt/tao-ds/all]: \c"
+            read SEC_OPT
+        fi
+
+        case ${SEC_OPT} in
+            tao-trt)
+                docker rm tao-trt;;
+            tao-ds)
+                docker rm tao-ds;;
+            all)
+                docker rm $(docker ps -a -q) 
+                ;;
+        esac
+
+        exit
+    else
+        echo -e "Error Input "
+    fi
+done

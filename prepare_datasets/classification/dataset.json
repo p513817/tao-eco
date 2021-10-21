@@ -1,0 +1,7 @@
+{
+    "path":"./dataset/glasses-detected",
+    "classes":[
+	"glasses",
+	"non-glasses"
+    ]
+}
