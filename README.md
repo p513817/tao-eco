@@ -1,12 +1,12 @@
 # TAO-ECO
 
-1. Build Environments for Inference (`TensorRT`, `DeepStream`) & Convert `etlt` model
+* Build Environments for Inference (`TensorRT`, `DeepStream`) & Convert `etlt` model
     
     * docker
         * [Dockerfile](./docker/Dockerfile) : build Docker image and container
         * [requirements.sh](./docker/requirements.sh): install requirement when building the target docker image.
         
-2. Make A Custom Dataset
+* Make A Custom Dataset
     
     * prepare_datasets/{tasks}
         > tasks=classfication:
@@ -15,7 +15,7 @@
         * [take_pictures.py](./training_tools/make_datasets/classification/take_pictures.py): execute it to collect data
         * [format_dataset.py](./training_tools/make_datasets/classification/format_dataset.py): split datasets into `split/` using `-s` and `--sroot`
     * 
-3. Train with TAO Toolkit
+* Train with TAO Toolkit
 
 # How to use?
 
